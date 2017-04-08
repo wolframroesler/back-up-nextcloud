@@ -10,9 +10,12 @@ for user in linus;do
 	DIR=$BASE/$user
 	mkdir -p $DIR || exit
 
+	umount /mnt/$user &>/dev/null
 	mount /mnt/$user || exit
 
-	rdiff-backup --terminal-verbosity 9 /mnt/$user $DIR || exit
+	rdiff-backup --terminal-verbosity 5 /mnt/$user $DIR || exit
 	
 	umount /mnt/$user
+
+	echo
 done
