@@ -3,7 +3,7 @@
 # Backups go here
 BASE=~/cloud-backup
 
-for user in linus;do
+for user in linus jacky wolfram;do
 	echo "Backing up $user"
 
 	# Make the destination directory
@@ -14,12 +14,8 @@ for user in linus;do
 	umount /mnt/$user &>/dev/null
 	mount /mnt/$user || exit
 
-	# Find the file with exclude patterns
-	EXCLUDE=$DIR/exclude
-	[ -f $EXCLUDE ] || EXCLUDE=/dev/null
-
 	# Do it
-	rdiff-backup --exclude-filelist $EXCLUDE --terminal-verbosity 5 /mnt/$user $DIR || exit
+	rdiff-backup --exclude-filelist $BASE/exclude --terminal-verbosity 5 /mnt/$user $DIR || exit
 	
 	# Unmount the WebDAV directory
 	umount /mnt/$user
