@@ -6,11 +6,15 @@ Of course, you could install the Nextcloud client software and let it sync every
 
 This article describes how to back up your Nextcloud data to the harddisk of your Linux machine in a one-way fashion (changes to the backup will not be synced back into the cloud).
 
-The Nextcloud client is not required.
+The Nextcloud client is not required. sudo permissions are required during set-up only.
 
 ## How it works
 
 Mount your Nextcloud files using WebDAV. Then, use rdiff-backup to back them up to a local folder.
+
+## Before you begin
+
+The following instructions assume that you are familiar with Linux administration and with the Unix shell. Read and understand the shell commands before executing them. You will be editing crucial operating system files, messing them up can make your system fail to boot. Edit these files at your own risk. This is not a copy-and-paste-for-noobs recipe.
 
 ## Preparations
 
@@ -24,9 +28,9 @@ $ sudo mkdir /mnt/myname
 $ sudo usermod -aG davfs2 $USER
 ```
 
-The last command (usermod) allows your Linux user to mount WebDAV shares. This allows the actual backup to run without root/sudo permissions.
+The last command (usermod) allows your Linux user to mount WebDAV shares. This allows the actual backup to run without root/sudo permissions. I had to reboot to activate this change (logging off might have been enough, though).
 
-## Mount the Nextcloud folder
+## Configure the WebDAV mount
 
 The following examples assume that
 
@@ -57,6 +61,7 @@ To back up your Nextcloud data into directory `~/cloud-backup/myuser`:
 ```sh
 $ mount /mnt/myuser
 $ rdiff-backup /mnt/myuser ~/cloud-backup/myuser
+$ umount /mnt/myuser
 ```
 
 The shell script `cloud-backup.sh` in this repository does this in a more sophisticated way. It scans the names of the cloud users from the fstab file and mounts, backs up, and unmounts each user's files. Also, it supplies an exclusion file which specifies files that are not to be backed up. I use this for shared folders (stored once, visible to more than one account) which I want to back up only once, not once per user.
