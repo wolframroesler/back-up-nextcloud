@@ -17,7 +17,7 @@ grep webdav /etc/fstab | cut -f2 -d' ' | cut -f3 -d/ | sort | while read user;do
 	mount /mnt/$user || exit
 
 	# Do it
-	rdiff-backup --force --exclude-filelist $BASE/exclude --terminal-verbosity 5 /mnt/$user $DIR || exit
+	rdiff-backup --force --exclude-filelist $(dirname $0)/exclude.txt --terminal-verbosity 5 /mnt/$user $DIR || exit
 	
 	# Unmount the WebDAV directory
 	umount /mnt/$user

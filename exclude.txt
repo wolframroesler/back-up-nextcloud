@@ -1,0 +1,4 @@
+/mnt/jacky/Photos
+/mnt/jacky/Shared
+/mnt/wolfram/Photos
+/mnt/wolfram/Shared
