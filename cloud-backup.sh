@@ -11,7 +11,7 @@ LOG=/tmp/cloud-backup.log
 rm -f $LOG
 
 # Get user list from fstab file
-grep webdav /etc/fstab | cut -f2 -d' ' | cut -f3 -d/ | sort | while read user;do
+grep webdav /etc/fstab | cut -f2 -d' ' | cut -f3 -d/ | shuf | while read user;do
 
 	# Show the starting message
 	echo
