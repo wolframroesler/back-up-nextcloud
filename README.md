@@ -1,6 +1,6 @@
 # How to back up Nextcloud data in Linux
 
-So you have your Nextcloud, but how do you make a backup of the data stored in the cloud to your local Linux machine?
+So you rented your Nextcloud from a service provider (e. g. https://www.pixelx.de/nextcloud.html). That's super convenient because you don't have to install and operate your own Nextcloud instance, but leaves you worried about what happens if the provider becomes unavailable for whatever reason. How do you make a backup of the data stored in the cloud to your local Linux machine?
 
 Of course, you could install the Nextcloud client software and let it sync everything to your machine, but that's not a backup. Imagine someone, somehow, removed a file from your backup: The Nextcloud client would immediately sync the removal over to your cloud, deleting the file there. Of course, Nextcloud will store the file for another 30 days, but then, is your Linux machine backing up the cloud data, or vice-versa? A backup should not be able to modify the data it is backing up.
 
@@ -84,4 +84,4 @@ Mounting WebDAV: https://wiki.ubuntuusers.de/WebDAV/
 rsync: http://rsync.samba.org
 
 ---
-*Wolfram Rösler • wolfram@roesler-ac.de • https://twitter.com/wolframroesler • https://github.com/wolframroesler*
+*Wolfram Rösler • wolfram@roesler-ac.de • https://twitter.com/wolframroesler • https://gitlab.com/wolframroesler*
