@@ -34,7 +34,9 @@ $ sudo mkdir /mnt/nextcloud-encrypted
 Then, initialize the encryption like this:
 
 ```sh
-$ encfs --stdinpass --reverse /var/www/nextcloud/data /mnt/nextcloud-encrypted
+$ sudo encfs --stdinpass --reverse \
+  /var/www/nextcloud/data \
+  /mnt/nextcloud-encrypted
 ```
 
 This will ask you if you want to do extended or paranoid stuff. Just press Enter. Then, it'll ask you for a password. Enter a secure password (for example, use `pwgen` to create one) and store it in a safe place.
@@ -96,13 +98,13 @@ File `encrypted-backup.sh` in this repository is a slightly more sophisticated v
 
 * The encryption key file is not stored in www/nextcloud/data but in the user's home directory.
 * Log files with start date, end date, and rsync log are created in the user's home directory.
-* The script checks if it's already running, and terminates immediately if it is. That makes it possible to execute it more frequently (e. g. I've set up cron to run it once per hour).
+* The script checks if it's already running, and terminates immediately if it is. That makes it possible to execute it more frequently, even when the previous instance is still running (e. g. I've set up cron to run it once per hour).
 
 ## Recovery
 
 For recovery of our backed up Nextcloud files we first mount the remote backup via WebDAV (giving us access to the encrypted files on the remote server), and then use `encfs` to create an unencrypted version of these files on another mount point. Again, how to make a remote file  server available through WebDAV is beyond the scope of this article, and we're using the Hetzner Storage Box as an example.
 
-### Mount encrypted files
+### Mounting encrypted files
 
 First create the mount point:
 
@@ -110,7 +112,7 @@ First create the mount point:
 $ sudo mkdir /mnt/nextcloud-recovery
 ```
 
-Then put the following into your `/etc/fstab`
+Then put the following into your `/etc/fstab`:
 
 ```
 https://u123456.your-storagebox.de /mnt/nextcloud-recovery davfs user,noauto,ro,dir_mode=555,file_mode=444,_netdev 0 0
@@ -148,9 +150,9 @@ dr-xr-xr-x 10 root root       0 Jun 10 18:38 P1XUHxjwDFxSCENwb-hgcOS6RK7ADLDD0g,
 -r--r--r--  1 root root       0 Jun 16 17:05 wCC4iTqF0FCM9HL7EPPp62uP
 ```
 
-Very similar to the encrypted data we're copying to the remote backup server, however this time we are looking at what's already on the remote backup.
+Very similar to the encrypted data we're rsyncing to the remote backup server, however this time we are looking at what's already on the remote.
 
-### Decrypt the encrypted backup
+### Decrypting the encrypted backup
 
 First of all we need another mount point:
 
@@ -161,7 +163,11 @@ $ sudo mkdir /mnt/nextcloud-decrypted
 into which we now let `encfs` do its magic:
 
 ```sh
-$ sudo ENCFS6_CONFIG=/var/www/nextcloud/data/.encfs6.xml encfs --public --stdinpass /mnt/nextcloud-recovery/nextcloud/nextcloud-encrypted /mnt/nextcloud-decrypted <<<'your encfs password'
+$ sudo ENCFS6_CONFIG=/var/www/nextcloud/data/.encfs6.xml \
+  encfs --public --stdinpass \
+  /mnt/nextcloud-recovery/nextcloud/nextcloud-encrypted \
+  /mnt/nextcloud-decrypted \
+  <<<'your encfs password'
 ```
 
 Note that the encfs root directory (where the encrypted files are) isn't the WebDAV mount itself (`/mnt/nextcloud-recovery`) but a subdirectory within in, namely the one that contains the actual encrypted files. This of course depends on which directory your remote storage actually provides WebDAV access to.
@@ -182,6 +188,31 @@ dr-xr-xr-x  6 root root    0 Jul  9 20:52 itunes
 -r--r--r--  1 root root  13K Jun 16 17:05 updater.log
 dr-xr-xr-x  4 root root    0 Jun 16 17:05 updater-ocdj1xdf31l8
 dr-xr-xr-x  6 root root    0 Jul  2 16:14 wolfram
+```
+
+### Putting it all together
+
+Shell script `recover.sh` in this repository first mounts the remote encrypted files, then mounts the decrypted files, then puts the user into an interactive shell to access them. When the user exits this shell, everything is unmounted. It also shows how to use an alternate location for the encryption key file.
+
+Here's how to use it:
+
+```sh
+$ sudo bash recover.sh
+/mnt/nextcloud-decrypted
+Press ^D to unmount the recovery files.
+$ ls -l
+total 1112
+dr-xr-xr-x  6 root root       0 Jul  8 14:56 admin
+dr-xr-xr-x 10 root root       0 Jun 10 18:38 appdata_ocdj1xdf31l8
+dr-xr-xr-x  2 root root       0 Jun 16 17:05 files_external
+-r--r--r--  1 root root       0 Jun 16 17:05 index.html
+dr-xr-xr-x  6 root root       0 Jul  9 20:52 itunes
+-r--r--r--  1 root root 1125158 Jul 14 11:40 nextcloud.log
+dr-xr-xr-x  4 root root       0 Jun 16 17:05 updater-ocdj1xdf31l8
+-r--r--r--  1 root root   12349 Jun 16 17:05 updater.log
+dr-xr-xr-x  6 root root       0 Jul  2 16:14 wolfram
+$ exit
+/sbin/umount.davfs: waiting while mount.davfs (pid 16026) synchronizes the cache .. OK
 ```
 
 ## More information
