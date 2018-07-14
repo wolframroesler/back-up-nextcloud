@@ -4,7 +4,7 @@ So you set up your Nextcloud instance on your own Linux machine. Congratulations
 
 What you want is a backup of your data on a remote machine. That could be your work computer (if your employer allows it), a friend's computer (if he doesn't mind the power and bandwitdh consumption), or a storage server you rented from a service provider. In either case, the remote machine is in someone else's hands, and you don't want them to be able to access your files. So, we're looking for an encrypted backup.
 
-This article explains how to do it. I'm using a Hetzner Storage Box (https://www.hetzner.de/storage-box) which gives you several hundred gigabytes of storage which you can acccess by various means, including rsync over SSH which is what we're going to use in this article.
+This article explains how to do it. I'm using a Hetzner Storage Box (https://www.hetzner.de/storage-box) which gives you several hundred gigabytes of storage which you can acccess by various means, including WebDAV and rsync over SSH which is what we're going to use in this article.
 
 ## Set up ssh
 
@@ -14,6 +14,8 @@ Set up your remote machine to accept rsh connections from your local machine. Ho
 $ cd ~/.ssh
 $ echo -e "mkdir .ssh \n chmod 700 .ssh \n put id_rsa.pub .ssh/authorized_keys \n chmod 600 .ssh/authorized_keys" | sftp u123456@u123456.your-storagebox.de
 ```
+
+Don't forget to enable SSH access (and WebDAV, while you're at it, which we'll use for recovery) in your Storage Box configuration (on the Hetzner Robot page).
 
 ## Set up the encrypted file system
 
@@ -98,13 +100,99 @@ File `encrypted-backup.sh` in this repository is a slightly more sophisticated v
 
 ## Recovery
 
-To be done.
+For recovery of our backed up Nextcloud files we first mount the remote backup via WebDAV (giving us access to the encrypted files on the remote server), and then use `encfs` to create an unencrypted version of these files on another mount point. Again, how to make a remote file  server available through WebDAV is beyond the scope of this article, and we're using the Hetzner Storage Box as an example.
+
+### Mount encrypted files
+
+First create the mount point:
+
+```sh
+$ sudo mkdir /mnt/nextcloud-recovery
+```
+
+Then put the following into your `/etc/fstab`
+
+```
+https://u123456.your-storagebox.de /mnt/nextcloud-recovery davfs user,noauto,ro,dir_mode=555,file_mode=444,_netdev 0 0
+```
+
+Note that we're mounting in read-only mode to avoid inadvertant changes of the remote files.
+
+Also, put the remote backup's user name and password into `/etc/davfs2/secrets`:
+
+```
+/mnt/nextcloud-recovery u123456 YourWebDAVPassword
+```
+
+Now you can mount the encrypted files:
+
+```sh
+$ sudo mount /mnt/nextcloud-recovery
+```
+
+This is what it looks like:
+
+```
+$ ls -l /mnt/nextcloud-recovery/nextcloud/nextcloud-encrypted/
+insgesamt 1112
+dr-xr-xr-x  4 root root       0 Jun 16 17:05 7KXgpNAfxP7JfWVr32JiW964SDU4K,SZKv7XMniCNliIz-
+dr-xr-xr-x  2 root root       0 Jun 16 17:05 bIR3WrZyEQAMz0xYUBoy6dKo
+-r--r--r--  1 root root   12349 Jun 16 17:05 gqDqwBKCthaZjdE1JaDKOLpG
+dr-xr-xr-x  6 root root       0 Jul  2 16:14 H363-hxkwz2y-eisFw7V,pHd
+-r--r--r--  1 root root     324 Jun 16 17:05 IoMqqgHXyCvi5N-gRdAdr6D5
+-r--r--r--  1 root root       0 Jun 16 17:05 K19KtnWAKuTStxHjHlQzVS7O
+dr-xr-xr-x  6 root root       0 Jul  8 14:56 Kt9kFGR9sGnpA3ZQLvecPgEE
+-r--r--r--  1 root root 1125158 Jul 14 11:40 KtoutrE2SXJF6dtm63K-YekW
+dr-xr-xr-x  6 root root       0 Jul  9 20:52 LqqeraF-,c1S7gQwrVwh4aB4
+dr-xr-xr-x 10 root root       0 Jun 10 18:38 P1XUHxjwDFxSCENwb-hgcOS6RK7ADLDD0g,WelVZqTWSk1
+-r--r--r--  1 root root       0 Jun 16 17:05 wCC4iTqF0FCM9HL7EPPp62uP
+```
+
+Very similar to the encrypted data we're copying to the remote backup server, however this time we are looking at what's already on the remote backup.
+
+### Decrypt the encrypted backup
+
+First of all we need another mount point:
+
+```sh
+$ sudo mkdir /mnt/nextcloud-decrypted
+```
+
+into which we now let `encfs` do its magic:
+
+```sh
+$ sudo ENCFS6_CONFIG=/var/www/nextcloud/data/.encfs6.xml encfs --public --stdinpass /mnt/nextcloud-recovery/nextcloud/nextcloud-encrypted /mnt/nextcloud-decrypted <<<'your encfs password'
+```
+
+Note that the encfs root directory (where the encrypted files are) isn't the WebDAV mount itself (`/mnt/nextcloud-recovery`) but a subdirectory within in, namely the one that contains the actual encrypted files. This of course depends on which directory your remote storage actually provides WebDAV access to.
+
+`--public` makes the decrypted files visible to non-root users. You may leave it away but then you'll have to `sudo -s` or similar to access them.
+
+Now, at last, you can recover your files:
+
+```sh
+$ cd /mnt/nextcloud-decrypted
+$ ls -l
+dr-xr-xr-x  6 root root    0 Jul  8 14:56 admin
+dr-xr-xr-x 10 root root    0 Jun 10 18:38 appdata_ocdj1xdf31l8
+dr-xr-xr-x  2 root root    0 Jun 16 17:05 files_external
+-r--r--r--  1 root root    0 Jun 16 17:05 index.html
+dr-xr-xr-x  6 root root    0 Jul  9 20:52 itunes
+-r--r--r--  1 root root 1,1M Jul 14 11:40 nextcloud.log
+-r--r--r--  1 root root  13K Jun 16 17:05 updater.log
+dr-xr-xr-x  4 root root    0 Jun 16 17:05 updater-ocdj1xdf31l8
+dr-xr-xr-x  6 root root    0 Jul  2 16:14 wolfram
+```
 
 ## More information
 
 This article got me started with encfs: http://jc.coynel.net/2013/08/secure-remote-backup-with-openvpn-rsync-and-encfs/
 
-Storage Box FAQ: https://wiki.hetzner.de/index.php/Backup_Space_SSH_Keys/en
+Storage Box ssh key handling: https://wiki.hetzner.de/index.php/Backup_Space_SSH_Keys/en
+
+Storage Box WebDAV: https://wiki.hetzner.de/index.php/Storage_Boxes/en#WebDAV
+
+Mounting WebDAV in Linux: https://gitlab.com/wolframroesler/snippets#mount-nextcloud
 
 I'm not affiliated with Hetzer in any way beside being a satisfied customer. Nobody's paying me for my endorsement of their product, unfortunately.
 
