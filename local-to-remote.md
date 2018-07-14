@@ -20,7 +20,7 @@ $ echo -e "mkdir .ssh \n chmod 700 .ssh \n put id_rsa.pub .ssh/authorized_keys \
 On your local machine, install the "encfs" package:
 
 ```sh
-sudo apt-get install encfs
+$ sudo apt-get install encfs
 ```
 
 Create the mount point for the encrypted file system:
@@ -32,7 +32,7 @@ $ sudo mkdir /mnt/nextcloud-encrypted
 Then, initialize the encryption like this:
 
 ```sh
-encfs --stdinpass --reverse /var/www/nextcloud/data /mnt/nextcloud-encrypted
+$ encfs --stdinpass --reverse /var/www/nextcloud/data /mnt/nextcloud-encrypted
 ```
 
 This will ask you if you want to do extended or paranoid stuff. Just press Enter. Then, it'll ask you for a password. Enter a secure password (for example, use `pwgen` to create one) and store it in a safe place.
@@ -56,9 +56,22 @@ drwxr-xr-x 10 www-data www-data   4096 Jun 10 18:38 P1XUHxjwDFxSCENwb-hgcOS6RK7A
 -rw-r--r--  1 www-data www-data      0 Jun 16 17:05 wCC4iTqF0FCM9HL7EPPp62uP
 ```
 
-## Backing up
+## Back up
 
-Copy the file `encrypted-backup.sh` from this repository to your local machine. Edit it to match your local configuration, and put the encryption password (which you entered when executing `encfs` above) into it.
+Copy following to file `encrypted-backup.sh` somewhere on your local machine. Edit it to match your local configuration, and put the encryption password (which you entered when executing `encfs` above) into it.
+
+```sh
+MNT=/mnt/nextcloud-encrypted
+mkdir -p $MNT || exit
+umount $MNT 2>/dev/null
+encfs --stdinpass --reverse /var/www/nextcloud/data $MNT <<<'your encfs password' || exit
+rsync -a -v -e "ssh -p23 -i /home/yourname/.ssh/id_rsa" \
+    --log-file=/var/log/encrypted-backup.log \
+    --partial --progress --stats \
+    $MNT \
+    "u123456@u123456.your-storagebox.de:nextcloud"
+umount $MNT
+```
 
 In the script, when invoking rsync, use `-e` to specify the remote server's ssh port and name of your local ssh private key file. The latter is necessary because we'll be invoking this file as root.
 
@@ -76,6 +89,12 @@ You may want to set up automatic backups. For example, to run the backup script 
 $ sudo crontab -e
 0 1 * * * bash /path/to/encrypted-backup.log >/var/log/encrypted-backup.out 2>&1
 ```
+
+File `encrypted-backup.sh` in this repository is a slightly more sophisticated version of the above script, with the following improvements:
+
+* The encryption key file is not stored in www/nextcloud/data but in the user's home directory.
+* Log files with start date, end date, and rsync log are created in the user's home directory.
+* The script checks if it's already running, and terminates immediately if it is. That makes it possible to execute it more frequently (e. g. I've set up cron to run it once per hour).
 
 ## Recovery
 
