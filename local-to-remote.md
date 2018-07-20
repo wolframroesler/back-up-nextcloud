@@ -215,6 +215,19 @@ $ exit
 /sbin/umount.davfs: waiting while mount.davfs (pid 16026) synchronizes the cache .. OK
 ```
 
+### Validating the backup
+
+Do the following to compare your complete Nextcloud to the contents of the backup. Note that this downloads and decrypts the entire backup, so be prepared for some considerable consumption of time and bandwidth. For best results, do this after a fresh run of `encrypted-backup.sh` and don't modify anything in your Nextcloud while it's running.
+
+```sh
+$ sudo bash recover.sh
+/mnt/nextcloud-decrypted
+Press ^D to unmount the recovery files.
+$ sudo diff -rq /var/www/nextcloud/data /mnt/nextcloud-decrypted
+```
+
+You may wish to add something like `-x .DS_Store` to the `diff` command line if you're using a Mac.
+
 ## More information
 
 This article got me started with encfs: http://jc.coynel.net/2013/08/secure-remote-backup-with-openvpn-rsync-and-encfs/
