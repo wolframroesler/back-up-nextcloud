@@ -1,5 +1,5 @@
 #!/bin/bash
-# Recover files from encrypted remote backup
+# Recover files from encrypted remote backup -- Linux version
 # by Wolfram Rösler 2018-07-14
 
 # Mount point for encrypted remote files (WebDAV mount)
@@ -15,7 +15,7 @@ export ENCFS6_CONFIG=/home/yourname/.encfs6.xml
 umount $DEC &>/dev/null
 umount $ENC &>/dev/null
 
-# Mount the encrypted files (rely on /etc/fstab to provide  the
+# Mount the encrypted files (rely on /etc/fstab to provide the
 # mount options and /etc/davfs2/secrets to provide the log-on
 # credentials)
 mount $ENC || exit
