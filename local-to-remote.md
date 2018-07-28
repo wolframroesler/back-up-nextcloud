@@ -228,6 +228,16 @@ $ sudo diff -rq /var/www/nextcloud/data /mnt/nextcloud-decrypted
 
 You may wish to add something like `-x .DS_Store` to the `diff` command line if you're using a Mac.
 
+## Recovery on a Mac
+
+To mount the encrypted files via WebDAV, press ⌘-K in Finder. Enter the WebDAV address (e. g., `https://u123456.your-storagebox.de`) and your user name (`u123456`) and password. If you allow Finder to store user name and password you don't have to enter them the next time.
+
+You can now see your encrypted files in Finder and access them in `/Volumes/u182094.your-storagebox.de`. To unmount the encrypted files, click the "eject" button (⏏) in Finder or enter (no sudo required):
+
+```sh
+$ umount /Volumes/u123456.your-storagebox.de
+```
+
 ## More information
 
 This article got me started with encfs: http://jc.coynel.net/2013/08/secure-remote-backup-with-openvpn-rsync-and-encfs/
