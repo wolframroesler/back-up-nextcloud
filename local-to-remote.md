@@ -100,7 +100,7 @@ File `encrypted-backup.sh` in this repository is a slightly more sophisticated v
 * Log files with start date, end date, and rsync log are created in the user's home directory.
 * The script checks if it's already running, and terminates immediately if it is. That makes it possible to execute it more frequently, even when the previous instance is still running (e. g. I've set up cron to run it once per hour).
 
-## Recovery in Linux
+## Recovery
 
 For recovery of our backed up Nextcloud files we first mount the remote backup via WebDAV (giving us access to the encrypted files on the remote server), and then use `encfs` to create an unencrypted version of these files on another mount point. Again, how to make a remote file  server available through WebDAV is beyond the scope of this article, and we're using the Hetzner Storage Box as an example.
 
@@ -192,12 +192,12 @@ dr-xr-xr-x  6 root root    0 Jul  2 16:14 wolfram
 
 ### Putting it all together
 
-Shell script `recover-linux.sh` in this repository first mounts the remote encrypted files, then mounts the decrypted files, then puts the user into an interactive shell to access them. When the user exits this shell, everything is unmounted. It also shows how to use an alternate location for the encryption key file.
+Shell script `recover.sh` in this repository first mounts the remote encrypted files, then mounts the decrypted files, then puts the user into an interactive shell to access them. When the user exits this shell, everything is unmounted. It also shows how to use an alternate location for the encryption key file.
 
 Here's how to use it:
 
 ```sh
-$ sudo bash recover-linux.sh
+$ sudo bash recover.sh
 /mnt/nextcloud-decrypted
 Press ^D to unmount the recovery files.
 $ ls -l
@@ -220,7 +220,7 @@ $ exit
 Do the following to compare your complete Nextcloud to the contents of the backup. Note that this downloads and decrypts the entire backup, so be prepared for some considerable consumption of time and bandwidth. For best results, do this after a fresh run of `encrypted-backup.sh` and don't modify anything in your Nextcloud while it's running.
 
 ```sh
-$ sudo bash recover-linux.sh
+$ sudo bash recover.sh
 /mnt/nextcloud-decrypted
 Press ^D to unmount the recovery files.
 $ sudo diff -rq /var/www/nextcloud/data /mnt/nextcloud-decrypted
@@ -238,16 +238,18 @@ First, install the "brew" packet manager:
 $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-Second, use it to install `encfs`:
+Second, use it to install `encfs`, the encrypted file system driver:
 
 ```sh
 $ brew cask install osxfuse
 $ brew install encfs
 ```
 
+Contrary to what the former says, it works fine without a reboot.
+
 ### Mounting the encrypted files
 
-To mount the encrypted files via WebDAV, press ⌘K in Finder. Enter the WebDAV address (e. g., `https://u123456.your-storagebox.de`) and your user name (`u123456`) and password. If you allow Finder to store user name and password you don't have to enter them the next time.
+To mount the encrypted files via WebDAV, press ⌘K in Finder. Enter the WebDAV address (e. g., `https://u123456.your-storagebox.de`) and your user name (`u123456`) and password. If you allow Finder to store user name and password in your key chain, you don't have to enter them the next time.
 
 Your encrypted files are now available in `/Volumes/u123456.your-storagebox.de`.
 
@@ -277,7 +279,7 @@ Note that, unlike in Linux, this automatically removes the mount point.
 
 ### Putting it all together
 
-Use shell script `recover-macos.sh` to mount the encrypted files and open a Finder window to browse them. Tailor the script to suit your needs, then invoke it like this:
+Shell script `recover-macos.sh` in this repository mounts the encrypted files and opens a Finder window to browse them. Tailor the script to suit your needs, then invoke it like this:
 
 ```sh
 $ sudo bash recover-macos.sh
