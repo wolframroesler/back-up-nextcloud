@@ -6,6 +6,15 @@ What you want is a backup of your data on a remote machine. That could be your w
 
 This article explains how to do it. I'm using a Hetzner Storage Box (https://www.hetzner.de/storage-box) which gives you several hundred gigabytes of storage which you can acccess by various means, including WebDAV and rsync over SSH which is what we're going to use in this article.
 
+## Install Prerequisites
+
+Required for both backup and recovery.
+
+```sh
+$ sudo apt install encfs
+$ sudo apt install davfs2
+```
+
 ## Set up ssh
 
 Set up your remote machine to accept rsh connections from your local machine. How to do this is beyond the scope if this article, however here's how to copy your local ssh public key to the Hetzner Storage Box (replace your user name appropriately):
@@ -18,12 +27,6 @@ $ echo -e "mkdir .ssh \n chmod 700 .ssh \n put id_rsa.pub .ssh/authorized_keys \
 Don't forget to enable SSH access (and WebDAV, while you're at it, which we'll use for recovery) in your Storage Box configuration (on the Hetzner Robot page).
 
 ## Set up the encrypted file system
-
-On your local machine, install the "encfs" package:
-
-```sh
-$ sudo apt-get install encfs
-```
 
 Create the mount point for the encrypted file system:
 
@@ -103,6 +106,10 @@ File `encrypted-backup.sh` in this repository is a slightly more sophisticated v
 ## Recovery
 
 For recovery of our backed up Nextcloud files we first mount the remote backup via WebDAV (giving us access to the encrypted files on the remote server), and then use `encfs` to create an unencrypted version of these files on another mount point. Again, how to make a remote file  server available through WebDAV is beyond the scope of this article, and we're using the Hetzner Storage Box as an example.
+
+### Install prerequisites
+
+As described above.
 
 ### Mounting encrypted files
 
