@@ -11,6 +11,10 @@ DEC=/mnt/nextcloud-decrypted
 # Encryption key file
 export ENCFS6_CONFIG=/home/yourname/.encfs6.xml
 
+# Make sure both mount points exist
+mkdir -p $ENC || exit
+mkdir -p $DEC || exit
+
 # Umount first just to be sure
 umount $DEC &>/dev/null
 umount $ENC &>/dev/null
